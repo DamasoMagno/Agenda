@@ -2,13 +2,7 @@ const toDo = document.querySelector("input");
 const createToDo = document.querySelector("button");
 const dateInput = document.querySelector("input[type=date]");
 
-if (!localStorage.getItem("alert")) {
-    alert("Atenção: Quando for fazer alguma alteração recarregue a página");
-    localStorage.setItem("alert", true);
-}
-
-//Função para criar uma tarefa
-createToDo.addEventListener("click",()=>{
+const createTodo = function(){
     let todoID = Date.now();
 
     if(!toDo.value || !dateInput.value){
@@ -28,19 +22,30 @@ createToDo.addEventListener("click",()=>{
     let item = create(todoID)
     document.querySelector(".items").append(item);
 
-    //Está sendo chamada escopo local para que ao ser criada a todo a mesma possa ser modificada
+    toDo.value = "" ;
+    dateInput.value = "";
+
     updateAndDelete();
+}
+
+createToDo.addEventListener("click",()=>{
+    createTodo();
 })
 
-//Função criada com o intuito de atualizar ou apagar alguma tarefa minha
+document.addEventListener("keydown",(e)=>{
+    if(e.keyCode == 13){
+        createTodo();
+    }
+})
+
+
 let updateAndDelete = () => {
     const button = document.querySelectorAll("span");
     button.forEach((item)=>{
         if (!item.dataset.carregado) {
             item.dataset.carregado = 1;
-            
             item.addEventListener("click",()=>{
-                if(item.innerHTML === "update"){
+                if(item.innerHTML === "edit"){
                     let update = prompt("Digite novas infomações");
                     if(update){
                         let todo = JSON.parse(localStorage.getItem("teste"));
@@ -48,6 +53,9 @@ let updateAndDelete = () => {
         
                         todo[findIndex].todo = update;
                         
+                        let divPai = item.parentElement.parentElement;
+                        divPai.querySelector('p').innerHTML = update;
+
                         return localStorage.setItem("teste",JSON.stringify(todo));
                     }else {
                         alert("Digite informações válidas");
@@ -58,6 +66,8 @@ let updateAndDelete = () => {
                     let find = todo.findIndex(element => element.id === Number(item.classList[1]));
                     todo.splice(find,1);
                     localStorage.setItem("teste",JSON.stringify(todo));
+
+                    item.parentElement.parentElement.remove();
                 }
             });        
         }
@@ -76,8 +86,8 @@ function create(id){
     const edit = document.createElement("div");
     edit.classList.add("edit");
 
-    const spanDate = document.createElement("span");
     const title = document.createElement("p");
+    const spanDate = document.createElement("span");
     const buttonDelete = document.createElement("span");
     const buttonUpdate = document.createElement("span");
 
@@ -87,6 +97,11 @@ function create(id){
         if (dados.id == id) {
             title.innerHTML = `${dados.todo}`;
             date = dados.date.split("-").reverse().join("/");
+            let currentDate = new Date().toLocaleDateString("pt-Br");
+            if(currentDate == date){
+                item.classList.add("favorite");
+                console.log("Deu certo");
+            }
             spanDate.innerHTML = `${date}`;    
         }
     }) : (
@@ -100,14 +115,13 @@ function create(id){
     buttonUpdate.classList.add(`material-icons`);
     buttonDelete.classList.add(`${id}`);
     buttonUpdate.classList.add(`${id}`);
-    buttonUpdate.innerHTML = "update";
+    buttonUpdate.innerHTML = "edit";
     buttonDelete.innerHTML = "delete";
 
     content.append(title);
     content.append(spanDate)
     edit.append(buttonUpdate);
     edit.append(buttonDelete);
-
     
     item.append(content);
     item.append(edit);
@@ -115,7 +129,7 @@ function create(id){
     return item;
 }
 
-window.onload = ()=>{
+window.onload = () => {
     let dados = JSON.parse(localStorage.getItem('teste'));
     if (dados) {
         dados.forEach(dado => {
