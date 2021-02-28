@@ -19,6 +19,7 @@ main {
 }
 
 .create {
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
     display: flex;
     width: 100%;
     margin-top: 10px;
@@ -221,6 +222,8 @@ input::placeholder{
 .cancel {
     background-color: red;
 }
+
+
 
 @media (max-width : 600px){
     main {

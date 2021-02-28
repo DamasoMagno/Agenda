@@ -1,82 +1,90 @@
-const toDo = document.querySelector("input");
+const todoField = document.querySelector("input");
 const createToDo = document.querySelector("button");
 const dateInput = document.querySelector("input[type=date]");
 
-const createTodo = function(){
-    let todoID = Date.now();
+createToDo.addEventListener("click",()=>{
+    const id = Date.now();
 
-    if(!toDo.value || !dateInput.value){
-        return alert("Digite numeros válidos")
+    if(!todoField.value || !dateInput.value){
+        return alert("Você está tentando criar um tarefa sem nenhum valor!")
     }
 
-    let toDoTeste = JSON.parse(localStorage.getItem("teste")) || [];
+    const dateFormatted = dateInput.value.split("-").reverse().join("/");
 
-    toDoTeste.push({
-        id: todoID,
-        todo:toDo.value,
-        date:dateInput.value
-    })
+    console.log(dateFormatted);
 
-    localStorage.setItem("teste",JSON.stringify(toDoTeste));
+    let TODO = JSON.parse(localStorage.getItem("todo")) || [];
 
-    let item = create(todoID)
-    document.querySelector(".items").append(item);
+    TODO.push({
+        id:id,
+        title:todoField.value,
+        date:dateFormatted
+    });
 
-    toDo.value = "" ;
+    localStorage.setItem("todo",JSON.stringify(TODO));
+
+    const item = createItem(id);
+    document.querySelector(".items").append(item)
+
+    todoField.value = "";
     dateInput.value = "";
 
-    updateAndDelete();
+    deleteItem(id);
+    updateItem(id);
+});
+
+function updateItem(id){
+    let buttonUpdate = document.querySelector(`.UPDATE-${id}`);
+
+    let idButton = buttonUpdate .classList[1].split("-");
+    idButton = Number(idButton[1]);
+
+    buttonUpdate.addEventListener("click",()=>{
+        let TODOs = JSON.parse(localStorage.getItem("todo"));
+        TODOs.forEach( (TODO,index) => {
+            if(idButton === TODO.id){
+                let newTODO = prompt("Digite um novo nome");
+                alert("Digite uma data estilo 12/02/2021");
+                let newDate = prompt("Digite uma nova data");
+
+                let divFather = buttonUpdate.parentElement.parentElement;
+
+                if(newTODO){
+                    TODOs[index].title = newTODO;
+                    divFather.querySelector(".content p").innerHTML = newTODO;
+                }
+
+                if(newDate){
+                    TODOs[index].date = newDate;
+                    divFather.querySelector(".content span").innerHTML = newDate;
+                }
+
+                localStorage.setItem("todo",JSON.stringify(TODOs));
+            }
+        });
+    })
 }
 
-createToDo.addEventListener("click",()=>{
-    createTodo();
-})
 
-document.addEventListener("keydown",(e)=>{
-    if(e.keyCode == 13){
-        createTodo();
-    }
-})
-
-
-let updateAndDelete = () => {
-    const button = document.querySelectorAll("span");
-    button.forEach((item)=>{
-        if (!item.dataset.carregado) {
-            item.dataset.carregado = 1;
-            item.addEventListener("click",()=>{
-                if(item.innerHTML === "edit"){
-                    let update = prompt("Digite novas infomações");
-                    if(update){
-                        let todo = JSON.parse(localStorage.getItem("teste"));
-                        let findIndex  = todo.findIndex(element => element.id === Number(item.classList[1]));
-        
-                        todo[findIndex].todo = update;
-                        
-                        let divPai = item.parentElement.parentElement;
-                        divPai.querySelector('p').innerHTML = update;
-
-                        return localStorage.setItem("teste",JSON.stringify(todo));
-                    }else {
-                        alert("Digite informações válidas");
-                    }
-                }
-                if(item.innerHTML === "delete"){
-                    let todo = JSON.parse(localStorage.getItem("teste"));
-                    let find = todo.findIndex(element => element.id === Number(item.classList[1]));
-                    todo.splice(find,1);
-                    localStorage.setItem("teste",JSON.stringify(todo));
-
-                    item.parentElement.parentElement.remove();
-                }
-            });        
-        }
+function deleteItem(id){
+    let buttonDelete = document.querySelector(`.DELETE-${id}`);
+    
+    let idButton = buttonDelete.classList[1].split("-");
+    idButton = Number(idButton[1]);
+    
+    buttonDelete.addEventListener("click",()=>{
+        let TODOs = JSON.parse(localStorage.getItem("todo"));
+        TODOs.forEach( (TODO,index) => {
+            if(idButton === TODO.id){
+                TODOs.splice(index,1);
+                localStorage.setItem("todo",JSON.stringify(TODOs));
+                buttonDelete.parentElement.parentElement.remove();
+            }
+        });
     });
 }
 
-updateAndDelete();
-
-function create(id){
+function createItem(id){
     const item = document.createElement("div");
     item.classList.add("item")
 
@@ -87,39 +95,37 @@ function create(id){
     edit.classList.add("edit");
 
     const title = document.createElement("p");
-    const spanDate = document.createElement("span");
+    const date = document.createElement("span");
+
     const buttonDelete = document.createElement("span");
     const buttonUpdate = document.createElement("span");
 
-    let data = JSON.parse(localStorage.getItem("teste"));
+    const TODO = JSON.parse(localStorage.getItem("todo"));
+    TODO.forEach(dados => {
+        if(dados.id === id){
+            title.innerHTML = `${dados.title}`;
+            const currentDate = new Date().toLocaleDateString("pt-Br");
 
-    data ? data.forEach(dados => {
-        if (dados.id == id) {
-            title.innerHTML = `${dados.todo}`;
-            date = dados.date.split("-").reverse().join("/");
-            let currentDate = new Date().toLocaleDateString("pt-Br");
-            if(currentDate == date){
+            if(currentDate == dados.date){
                 item.classList.add("favorite");
-                console.log("Deu certo");
             }
-            spanDate.innerHTML = `${date}`;    
-        }
-    }) : (
-        title.innerHTML = "Atividade Exemplo",
-        spanDate = "20/10/2020",
-        buttonDelete.classList.add(1),
-        buttonUpdate.classList.add(1)
-    );
+
+            date.innerHTML = `${dados.date}`;   
+        } 
+    });
 
     buttonDelete.classList.add(`material-icons`);
     buttonUpdate.classList.add(`material-icons`);
-    buttonDelete.classList.add(`${id}`);
-    buttonUpdate.classList.add(`${id}`);
-    buttonUpdate.innerHTML = "edit";
+
+    buttonDelete.classList.add(`DELETE-${id}`);
+    buttonUpdate.classList.add(`UPDATE-${id}`);
+
     buttonDelete.innerHTML = "delete";
+    buttonUpdate.innerHTML = "edit";
 
     content.append(title);
-    content.append(spanDate)
+    content.append(date);
+
     edit.append(buttonUpdate);
     edit.append(buttonDelete);
     
@@ -130,13 +136,15 @@ function create(id){
 }
 
 window.onload = () => {
-    let dados = JSON.parse(localStorage.getItem('teste'));
-    if (dados) {
-        dados.forEach(dado => {
-            let item = create(dado.id);
+    let TODO = JSON.parse(localStorage.getItem('todo'));
+
+    if (TODO) {
+        TODO.forEach(dado => {
+            let item = createItem(dado.id);
             document.querySelector(".items").append(item);        
+            deleteItem(dado.id);
+            updateItem(dado.id);
         });
     }
-    
-    updateAndDelete();
+
 }
